@@ -1,0 +1,8 @@
+class:
+  class_name: 友情链接
+  link_list:
+    1:
+      name: Amaya
+      link: https://amayading.com
+      avatar: https://xxxxx/avatar.png
+      descr: xxxxxxx
