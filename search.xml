@@ -63,7 +63,7 @@
 <p>Demo: <a href="https://github.com/wxul/vue-karma" target="_blank" rel="noopener">here</a></p>
 </blockquote>
 <p>karma是一个启动器，可以测试在浏览器中运行的代码，此处是配合PhantomJs启动无头浏览器；mocha是一个测试框架，但是本身并不带断言库；所以引用了chai当断言库，chai提供了多种断言语法，此处选用了expect。3者配合可以实现自动化测试</p>
-<p>目录结构:<br><img src="karma-tree.png" alt=""></p>
+<p>目录结构:<br><img alt data-src="karma-tree.png" class="lazyload"></p>
 <h3 id="1-正常搭建vue-webpack开发环境"><a href="#1-正常搭建vue-webpack开发环境" class="headerlink" title="1. 正常搭建vue+webpack开发环境"></a>1. 正常搭建vue+webpack开发环境</h3><p>如目录结构所示，新建build文件夹用于存放开发配置，src目录用户存放项目源码</p>
 <h3 id="2-安装karma"><a href="#2-安装karma" class="headerlink" title="2. 安装karma"></a>2. 安装karma</h3><blockquote>
 <p>个人喜欢安装项目依赖时用yarn，其余时候用npm</p>
@@ -328,7 +328,7 @@
   <entry>
     <title>rem参考表格</title>
     <url>/blog/2016/04/15/rem%E5%8F%82%E8%80%83%E8%A1%A8%E6%A0%BC/</url>
-    <content><![CDATA[<p><img src="http://albert.amayading.com/usr/uploads/2016/04/2145423596.png" alt="emTable.png" title="emTable.png"></p>
+    <content><![CDATA[<p><img alt="emTable.png" title="emTable.png" data-src="http://albert.amayading.com/usr/uploads/2016/04/2145423596.png" class="lazyload"></p>
 ]]></content>
       <categories>
         <category>前端</category>
