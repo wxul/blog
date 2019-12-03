@@ -12,7 +12,7 @@ categories: [前端]
 karma是一个启动器，可以测试在浏览器中运行的代码，此处是配合PhantomJs启动无头浏览器；mocha是一个测试框架，但是本身并不带断言库；所以引用了chai当断言库，chai提供了多种断言语法，此处选用了expect。3者配合可以实现自动化测试
 
 目录结构:
-![image](搭建Vue+karma+mocha+chai自动化测试环境/karma-tree.png)
+![](karma-tree.png)
 
 ### 1. 正常搭建vue+webpack开发环境
 
