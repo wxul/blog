@@ -1,6 +1,68 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>从0开始配置wsl中的factorio服务器</title>
+    <url>/blog/2019/12/14/%E4%BB%8E0%E5%BC%80%E5%A7%8B%E9%85%8D%E7%BD%AEwsl%E4%B8%AD%E7%9A%84factorio%E6%9C%8D%E5%8A%A1%E5%99%A8/</url>
+    <content><![CDATA[<p>首先，搭服务器肯定是为了联机。其次，异星工厂无头版服务器只有linux下能运行。家里多出来的笔记本装的是windows系统而且还需要当打印服务器，所以只能使用wsl子系统运行异星工厂服务器了。</p>
+<a id="more"></a>
+
+<h2 id="1-启用WSL"><a href="#1-启用WSL" class="headerlink" title="1. 启用WSL"></a>1. 启用WSL</h2><p>首先win10最好是更新至最新版，那启用wsl直接就是wsl2了。wsl升级不在此范围内~</p>
+<p>启用方式网上有很多教程，稍微总结一下步骤</p>
+<p>管理员打开powershell并运行</p>
+<figure class="highlight powershell"><table><tr><td class="code"><pre><span class="line">Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux</span></pre></td></tr></table></figure>
+
+<p>进入microsoft store搜索linux选择发行版下载，我选择的是ubuntu</p>
+<blockquote>
+<p>我这里选择安装时无响应，打开cmd输入 <code>wsreset</code> 清空store缓存后解决</p>
+</blockquote>
+<p>安装完毕后可以在任意命令行输入 <code>wsl -l</code> 查看已安装的子系统</p>
+<p>输入 <code>wsl</code> 进入子系统，首次进入会设置用户名以及密码。之后就可以通过此命令进入子系统了</p>
+<h2 id="2-配置"><a href="#2-配置" class="headerlink" title="2. 配置"></a>2. 配置</h2><p>首先更换源</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="built_in">cd</span> /etc/apt/</span></pre></td></tr><tr><td class="code"><pre><span class="line"><span class="comment"># 备份</span></span></pre></td></tr><tr><td class="code"><pre><span class="line">sudo cp sources.list sources.list.bak</span></pre></td></tr><tr><td class="code"><pre><span class="line"><span class="comment"># vim</span></span></pre></td></tr><tr><td class="code"><pre><span class="line">sudo vim sources.list</span></pre></td></tr></table></figure>
+<p>然后通过命令替换成阿里的源</p>
+<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">:%s/security.ubuntu/mirrors.aliyun/g</span></pre></td></tr><tr><td class="code"><pre><span class="line">:%s/archive.ubuntu/mirrors.aliyun/g</span></pre></td></tr></table></figure>
+<p>保存退出后可以运行以下命令升级</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo apt-get update</span></pre></td></tr><tr><td class="code"><pre><span class="line">sudo apt-get upgrade</span></pre></td></tr></table></figure>
+
+<p>然后配置ssh</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo vim /etc/ssh/sshd_config</span></pre></td></tr></table></figure>
+<p>需要注意的几个配置项有：</p>
+<p><code>PORT</code> : 一般为22</p>
+<p><code>PasswordAuthentication</code> : 是否启用密码登录</p>
+<p>接着配置frp，用于内网穿透，可以把ssh和工厂服务器暴露至公网环境，需要先有一个公网的服务器，具体配置可以参考 <a href="https://github.com/fatedier/frp" target="_blank" rel="noopener">frp</a>。注意异星工厂是基于UDP协议</p>
+<p>最后是配置开机启动了，需要开机就启动wsl并且运行ssl和frp</p>
+<p>现在wsl里创建初始化脚本 <code>sudo vim /etc/init.wsl</code>:</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="meta">#! /bin/sh</span></span></pre></td></tr><tr><td class="code"><pre><span class="line"><span class="comment"># 启用ssh</span></span></pre></td></tr><tr><td class="code"><pre><span class="line">/etc/init.d/ssh <span class="variable">$1</span></span></pre></td></tr><tr><td class="code"><pre><span class="line"><span class="comment"># 启用守护进程</span></span></pre></td></tr><tr><td class="code"><pre><span class="line">/etc/init.d/supervisor <span class="variable">$1</span></span></pre></td></tr></table></figure>
+
+<p>然后在windows里命令行输入 <code>shell:startup</code> 打开启动文件目录，创建文件 <code>wsl-startup.vbs</code>，输入以下内容：</p>
+<figure class="highlight vbs"><table><tr><td class="code"><pre><span class="line"><span class="keyword">Set</span> ws = WScript.<span class="built_in">CreateObject</span>(<span class="string">"WScript.Shell"</span>)</span></pre></td></tr><tr><td class="code"><pre><span class="line">ws.run <span class="string">"wsl -d Ubuntu -u root /etc/init.wsl start"</span>, vbhide</span></pre></td></tr></table></figure>
+<p>这样在windows开机之后会自动执行 <code>/etc/init.wsl start</code>，然后启用ssh和supervisor</p>
+<p>接下来配置守护进程启动frp：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="built_in">cd</span> /etc/supervisor/conf.d</span></pre></td></tr><tr><td class="code"><pre><span class="line">vim frpc.conf</span></pre></td></tr></table></figure>
+<p>输入以下内容并保存：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">[program:frpc]</span></pre></td></tr><tr><td class="code"><pre><span class="line">command&#x3D;&#x2F;home&#x2F;admin&#x2F;frp&#x2F;frpc -c &#x2F;home&#x2F;admin&#x2F;frp&#x2F;frpc.ini # 此处放自己的frp启动命令</span></pre></td></tr><tr><td class="code"><pre><span class="line">directory&#x3D;&#x2F;home&#x2F;admin   # 执行目录</span></pre></td></tr><tr><td class="code"><pre><span class="line">user&#x3D;admin # 执行用户</span></pre></td></tr><tr><td class="code"><pre><span class="line">stopsignal&#x3D;INT</span></pre></td></tr><tr><td class="code"><pre><span class="line">autostart&#x3D;true # 自动启动</span></pre></td></tr><tr><td class="code"><pre><span class="line">autorestart&#x3D;true # 自动重启</span></pre></td></tr><tr><td class="code"><pre><span class="line">startsecs&#x3D;3 # 重启间隔</span></pre></td></tr><tr><td class="code"><pre><span class="line">stderr_logfile&#x3D;&#x2F;var&#x2F;log&#x2F;frpc.err.log # 日志</span></pre></td></tr><tr><td class="code"><pre><span class="line">stdout_logfile&#x3D;&#x2F;var&#x2F;log&#x2F;frpc.out.log # 日志</span></pre></td></tr></table></figure>
+
+<p>自动启动就配置完毕了</p>
+<h2 id="3-异星工厂配置"><a href="#3-异星工厂配置" class="headerlink" title="3. 异星工厂配置"></a>3. 异星工厂配置</h2><p>先创建个目录放游戏相关的文件 <code>mkdir ~/factorio-server &amp;&amp; cd factorio-server</code>，然后创建个下载&amp;更新脚本 <code>vim update.sh</code>:</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="meta">#! /bin/bash</span></span></pre></td></tr><tr><td class="code"><pre><span class="line"></span></pre></td></tr><tr><td class="code"><pre><span class="line"><span class="built_in">echo</span> <span class="string">"begin download..."</span></span></pre></td></tr><tr><td class="code"><pre><span class="line">rm -rf linux64</span></pre></td></tr><tr><td class="code"><pre><span class="line"><span class="comment"># 下载最新版</span></span></pre></td></tr><tr><td class="code"><pre><span class="line">wget https://www.factorio.com/get-download/stable/headless/linux64 --no-check-certificate</span></pre></td></tr><tr><td class="code"><pre><span class="line"><span class="comment"># 解压</span></span></pre></td></tr><tr><td class="code"><pre><span class="line">tar xvJf linux64</span></pre></td></tr></table></figure>
+
+<p>工厂相关的配置都在 <code>factorio/data/</code> 下，建立服务器主要的是 <code>server-settings.example.json</code></p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 复制一份进行修改</span></span></pre></td></tr><tr><td class="code"><pre><span class="line">cp server-settings.example.json server-settings.json</span></pre></td></tr></table></figure>
+<p>具体的配置作用可以参考文件内注释</p>
+<p>然后返回 factorio-server 目录创建启动脚本 <code>vim start.sh</code>:</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="meta">#! /bin/bash</span></span></pre></td></tr><tr><td class="code"><pre><span class="line">fpwd=<span class="variable">$pwd</span>/factorio</span></pre></td></tr><tr><td class="code"><pre><span class="line"><span class="comment"># map.zip为地图文件，需要生成后上传过去</span></span></pre></td></tr><tr><td class="code"><pre><span class="line"><span class="variable">$fpwd</span>/bin/x64/factorio --port 33222 --server-settings <span class="variable">$fpwd</span>/data/server-settings.json --start-server <span class="variable">$fpwd</span>/saves/map.zip</span></pre></td></tr></table></figure>
+
+<p>以上两个脚本文件都要记得改执行权限 <code>chmod +x ./*.sh</code></p>
+<p>然后就可以通过screen在后台启用服务了 <code>screen ./start.sh</code></p>
+<h2 id="TODO"><a href="#TODO" class="headerlink" title="TODO"></a>TODO</h2>]]></content>
+      <categories>
+        <category>wsl</category>
+      </categories>
+      <tags>
+        <tag>wsl</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>php+apache站点迁移至docker实战</title>
     <url>/blog/2018/01/03/php-apache%E7%AB%99%E7%82%B9%E8%BF%81%E7%A7%BB%E8%87%B3docker%E5%AE%9E%E6%88%98/</url>
     <content><![CDATA[<p>最近又换服务器了，把原来的 centos 6.9 换成了 ubuntu。centos 毕竟大而全，需要手动配置的地方太多，而 ubuntu 就比较适合个人使用，少折腾。但是原服务器上的个人站是用的 typecho，php+apache+mysql 环境，免不了又要迁移。于是就想到了 <a href="https://www.docker.com/" target="_blank" rel="noopener">docker</a></p>
